@@ -288,7 +288,7 @@ function loadPage(page){
       content.innerHTML=`<div class="page-box">
         <h2 class="honk">Masukkan Bot Token</h2>
         <input type="text" id="tokenInput" placeholder="Masukkan token dari BotFather">
-        <button onclick="saveToken()">Tukar</button>
+        <button onclick="saveToken()">Tautkan Bot</button>
         <div class="status" id="statusToken"></div>
         <div class="link-buttons">
           <a href="https://t.me/BotFather" target="_blank">BotFather</a>
@@ -329,7 +329,7 @@ function loadPage(page){
 function saveToken(){
   const input=document.getElementById("tokenInput").value.trim();
   const status=document.getElementById("statusToken");
-  if(input){botToken=input;status.textContent="✅ Bot Token berjaya diaktifkan!";status.style.color="lightgreen";}
+  if(input){botToken=input;status.textContent="✅ Bot Token  Aktif";status.style.color="lightgreen";}
   else{status.textContent="⚠️ Sila masukkan token yang sah.";status.style.color="orange";}
 }
 
@@ -383,124 +383,28 @@ function startClock(){
   setInterval(updateClock,1000);
 }
 
-/* === START: REPLACED setupDashboard() - only this function was changed === */
 function setupDashboard(){
-  const form = document.getElementById("telegramForm");
-  const typeSelect = document.getElementById("type");
-  const inputArea = document.getElementById("inputArea");
-  const status = document.getElementById("status");
-
-  // Build input area based on selected type
-  typeSelect.addEventListener("change", () => {
-    const type = typeSelect.value;
-    let html = "";
-    switch (type) {
-      case "text":
-        html = `<label for="text">Mesej:</label><br><textarea id="text" rows="5" placeholder="Tulis mesej di sini..." required></textarea>`;
-        break;
-      case "photo":
-        html = `<label for="photo">URL Gambar:</label><br><input id="photo" type="url" placeholder="https://..." required>`;
-        break;
-      case "sticker":
-        html = `<label for="sticker">Sticker ID (file_id):</label><br><input id="sticker" type="text" placeholder="Masukkan Sticker file_id" required>`;
-        break;
-      case "voice":
-        html = `<label for="voice">Voice URL (direct file):</label><br><input id="voice" type="url" placeholder="https://...(.ogg/.mp3)" required>`;
-        break;
-      case "document":
-        html = `<label for="document">Document URL (direct file):</label><br><input id="document" type="url" placeholder="https://..." required>`;
-        break;
-      case "location":
-        html = `<label for="location">Location (lat,lng):</label><br><input id="location" type="text" placeholder="contoh: 3.139,101.6869" required>`;
-        break;
-      default:
-        html = `<label for="text">Keterangan:</label><br><textarea id="text" rows="5" placeholder="Tulis Teks di sini..." required></textarea>`;
+  const form=document.getElementById("telegramForm");
+  const typeSelect=document.getElementById("type");
+  const inputArea=document.getElementById("inputArea");
+  typeSelect.addEventListener("change",()=>{
+    const type=typeSelect.value;
+    let html="";
+    switch(type){
+      case"text": html=`<label for="text">Teks:</label><br><textarea id="text" rows="5" placeholder="Tulis Teks di sini..." required></textarea>`; break;
+      case"photo": html=`<label for="photo">URL Gambar:</label><br><input id="photo" type="url" placeholder="https://..." required>`; break;
+      case"sticker": html=`<label for="sticker">Sticker ID:</label><br><input id="sticker" type="text" placeholder="Masukkan Sticker ID" required>`; break;
+      case"voice": html=`<label for="voice">Voice URL:</label><br><input id="voice" type="url" placeholder="https://..." required>`; break;
+      case"document": html=`<label for="document">Document URL:</label><br><input id="document" type="url" placeholder="https://..." required>`; break;
+      case"location": html=`<label for="location">Location:</label><br><input id="location" type="text" placeholder="lat,lng" required>`; break;
     }
-    inputArea.innerHTML = html;
+    inputArea.innerHTML=html;
   });
-
-  // Trigger once to ensure initial input exists
-  (function triggerChangeOnce(){
-    const ev = new Event('change');
-    typeSelect.dispatchEvent(ev);
-  })();
-
-  // Submit handler: sends to Telegram API using saved botToken
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener("submit",(e)=>{
     e.preventDefault();
-    const chat_id = document.getElementById("chat_id").value.trim();
-    const type = document.getElementById("type").value;
-    const jumlah = Math.max(1, parseInt(document.getElementById("jumlah").value) || 1);
-
-    if (!botToken) {
-      status.textContent = "⚠️ Sila masukkan Bot Token dahulu!";
-      status.style.color = "orange";
-      return;
-    }
-    if (!chat_id) {
-      status.textContent = "❌ Sila masukkan ID target.";
-      status.style.color = "red";
-      return;
-    }
-
-    status.textContent = "⏳ Menghantar mesej...";
-    status.style.color = "#ff4fd8";
-
-    const apiBase = `https://api.telegram.org/bot${botToken}/`;
-    let success = 0, fail = 0;
-
-    for (let i = 0; i < jumlah; i++) {
-      try {
-        let endpoint = "";
-        let body = {};
-
-        if (type === "text") {
-          endpoint = "sendMessage";
-          body = { chat_id, text: document.getElementById("text").value };
-        } else if (type === "photo") {
-          endpoint = "sendPhoto";
-          body = { chat_id, photo: document.getElementById("photo").value };
-        } else if (type === "sticker") {
-          endpoint = "sendSticker";
-          body = { chat_id, sticker: document.getElementById("sticker").value };
-        } else if (type === "voice") {
-          endpoint = "sendVoice";
-          body = { chat_id, voice: document.getElementById("voice").value };
-        } else if (type === "document") {
-          endpoint = "sendDocument";
-          body = { chat_id, document: document.getElementById("document").value };
-        } else if (type === "location") {
-          endpoint = "sendLocation";
-          const loc = document.getElementById("location").value.split(",").map(s => s.trim());
-          body = { chat_id, latitude: parseFloat(loc[0]), longitude: parseFloat(loc[1]) };
-        } else {
-          endpoint = "sendMessage";
-          body = { chat_id, text: "No valid type selected" };
-        }
-
-        const resp = await fetch(apiBase + endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-
-        const result = await resp.json();
-        if (result && result.ok) success++; else { fail++; console.error(result); }
-      } catch (err) {
-        fail++; console.error(err);
-      }
-    }
-
-    if (fail === 0) {
-      status.textContent = `✅ Semua mesej (${success}) berjaya dihantar!`;
-      status.style.color = "lightgreen";
-    } else {
-      status.textContent = `⚠️ ${success} berjaya, ${fail} gagal.`;
-      status.style.color = "orange";
-    }
+    document.getElementById("status").textContent="😗 Succes Send Attack!";
   });
 }
-/* === END: REPLACED setupDashboard() === */
 
 loadPage("home");
 </script>
